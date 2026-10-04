@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+/*
+ * Paleta validada com scripts/validate_palette.js do design system, nos dois
+ * modos, em 04/10/2026:
+ *
+ *   claro, 8 slots adjacentes  → PASS (WARN de contraste em aqua/amarelo/magenta
+ *                                 → regra de alívio: rótulo visível + tabela,
+ *                                   que este dashboard sempre tem)
+ *   escuro, 8 slots adjacentes → PASS, todos ≥ 3:1
+ *   mapa, 3 slots, TODOS os pares, claro  → PASS (CVD ΔE 9.2 · normal 24.0)
+ *   mapa, 3 slots, TODOS os pares, escuro → PASS (CVD ΔE 9.4 · normal 20.9)
+ *
+ * O coroplético fica limitado a 3 matizes porque acima disso nenhuma ordenação
+ * passa no critério de todos os pares. Não é preferência, é o resultado do
+ * validador.
+ *
+ * A ordem dos slots é o mecanismo de segurança para daltonismo, não enfeite:
+ * atribuir sempre em ordem fixa, nunca ciclar, nunca gerar um 9º matiz.
+ */
+:root {
+  color-scheme: light;
+
+  --surface-1: #fcfcfb;        /* superfície do gráfico */
+  --surface-2: #f9f9f7;        /* plano da página */
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;       /* eixos e rótulos */
+  --grid: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+
+  --series-1: #2a78d6;  /* azul    */
+  --series-2: #eb6834;  /* laranja */
+  --series-3: #1baf7a;  /* aqua    */
+  --series-4: #eda100;  /* amarelo */
+  --series-5: #e87ba4;  /* magenta */
+  --series-6: #008300;  /* verde   */
+  --series-7: #4a3aa7;  /* violeta */
+  --series-8: #e34948;  /* vermelho*/
+
+  /* Cauda e contexto: cinza de retração, nunca um 9º matiz. */
+  --de-emphasis: #c9c8c0;
+
+  /* Rampa sequencial de um matiz só — magnitude (% apurado no mapa). */
+  --seq-100: #cde2fb; --seq-200: #9ec5f4; --seq-300: #6da7ec;
+  --seq-400: #3987e5; --seq-500: #256abf; --seq-600: #184f95;
+  --seq-700: #0d366b;
+
+  --neutral-mid: #f0efec;
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+  --delta-up: #006300;
+}
+
+/* O modo escuro tem passos próprios da mesma rampa, validados contra a
+   superfície escura — não é uma inversão automática do claro. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+
+    --surface-1: #1a1a19;
+    --surface-2: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+    --series-4: #c98500; --series-5: #d55181; --series-6: #008300;
+    --series-7: #9085e9; --series-8: #e66767;
+
+    --de-emphasis: #4a4a46;
+
+    --seq-100: #0d366b; --seq-200: #104281; --seq-300: #184f95;
+    --seq-400: #256abf; --seq-500: #3987e5; --seq-600: #6da7ec;
+    --seq-700: #9ec5f4;
+
+    --neutral-mid: #383835;
+    --delta-up: #0ca30c;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-1: #1a1a19;
+  --surface-2: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --grid: #2c2c2a;
+  --baseline: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+
+  --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+  --series-4: #c98500; --series-5: #d55181; --series-6: #008300;
+  --series-7: #9085e9; --series-8: #e66767;
+
+  --de-emphasis: #4a4a46;
+
+  --seq-100: #0d366b; --seq-200: #104281; --seq-300: #184f95;
+  --seq-400: #256abf; --seq-500: #3987e5; --seq-600: #6da7ec;
+  --seq-700: #9ec5f4;
+
+  --neutral-mid: #383835;
+  --delta-up: #0ca30c;
+}
+
+/* `inline` faz as utilidades emitirem var(), então elas seguem a troca de tema
+   em runtime em vez de congelar o valor do modo claro. */
+@theme inline {
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--text-primary);
+  --color-ink-2: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-grid: var(--grid);
+  --color-baseline: var(--baseline);
+  --color-hairline: var(--border);
+
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-de-emphasis: var(--de-emphasis);
+
+  --color-good: var(--status-good);
+  --color-critical: var(--status-critical);
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+html {
+  background: var(--surface-2);
+}
+
+body {
+  /* Fundo explícito: sem ele a página herda branco e o modo escuro vaza. */
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Números grandes isolados usam figuras proporcionais; tabular fica reservado
+   para colunas que precisam alinhar na vertical. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Canal de acessibilidade: em forced-colors a cor da série deixa de existir,
+   então a marca precisa de contorno para continuar legível. */
+@media (forced-colors: active) {
+  .marca {
+    forced-color-adjust: none;
+    stroke: CanvasText;
+    stroke-width: 1px;
+  }
+}
