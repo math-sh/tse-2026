@@ -10,7 +10,7 @@ import { BotaoSecundario, Dica, Vazio, type EstadoDica } from "@/components/ui";
 
 const ALTURA = 280;
 const M = { topo: 14, direita: 150, base: 34, esquerda: 44 };
-const COM_SEGUNDO_TURNO = new Set(["1", "3"]);
+const CARGOS_MAJORITARIOS = new Set(["1", "3"]);
 
 interface Serie {
   sqcand: string;
@@ -84,7 +84,7 @@ export function LinhaDoTempo({
 
   const ys = series.flatMap((s) => s.pontos.map((p) => p.y));
   const yMax = Math.max(...ys);
-  const mostrar50 = COM_SEGUNDO_TURNO.has(codigoCargo) && yMax >= 40;
+  const mostrar50 = CARGOS_MAJORITARIOS.has(codigoCargo) && yMax >= 40;
   const y = scaleLinear()
     .domain([0, Math.min(100, Math.max(mostrar50 ? 55 : 0, yMax * 1.12, 5))])
     .range([alturaPlot, 0])

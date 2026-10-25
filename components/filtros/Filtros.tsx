@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useMunicipios } from "@/lib/cliente";
 import { cargosDoSeletor, type FiltrosUrl } from "@/lib/filtros";
+import { cargoPorCodigo } from "@/lib/tse/cargos";
 import type { Municipio } from "@/lib/tse/normalize";
 import { UFS } from "@/lib/tse/ufs";
 
@@ -26,6 +27,8 @@ export function Filtros({
   definir: (m: Partial<FiltrosUrl>) => void;
 }) {
   const cargos = cargosDoSeletor(filtros.uf, filtros.mu);
+  // Governador no 2º turno não tem resultado por município no TSE.
+  const semMunicipio = !cargoPorCodigo(filtros.cargo)?.niveis.includes("mu");
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -70,6 +73,7 @@ export function Filtros({
             id={id}
             uf={filtros.uf}
             valor={filtros.mu}
+            semMunicipio={semMunicipio}
             aoMudar={(mu) => definir({ mu })}
           />
         )}
@@ -100,14 +104,17 @@ function SeletorMunicipio({
   id,
   uf,
   valor,
+  semMunicipio,
   aoMudar,
 }: {
   id: string;
   uf: string | null;
   valor: string | null;
+  /** O cargo atual não tem recorte municipal no TSE. */
+  semMunicipio: boolean;
   aoMudar: (mu: string | null) => void;
 }) {
-  const { data: municipios = [], isLoading, isError } = useMunicipios(uf);
+  const { data: municipios = [], isLoading, isError } = useMunicipios(semMunicipio ? null : uf);
   const [texto, setTexto] = useState("");
   const [aberto, setAberto] = useState(false);
   const [ativo, setAtivo] = useState(0);
@@ -154,14 +161,13 @@ function SeletorMunicipio({
     setAberto(false);
   };
 
-  const desabilitado = !uf;
-  const placeholder = !uf
-    ? "Escolha um estado primeiro"
-    : isLoading
-      ? "Carregando municípios…"
-      : isError
-        ? "Falha ao carregar municípios"
-        : `Todos os ${municipios.length} municípios`;
+  const desabilitado = !uf || semMunicipio;
+  let placeholder: string;
+  if (semMunicipio) placeholder = "Não se aplica a este cargo";
+  else if (!uf) placeholder = "Escolha um estado primeiro";
+  else if (isLoading) placeholder = "Carregando municípios…";
+  else if (isError) placeholder = "Falha ao carregar municípios";
+  else placeholder = `Todos os ${municipios.length} municípios`;
 
   return (
     <div ref={caixa} className="relative">

@@ -101,8 +101,6 @@ export function useMapa(cargo: string, inicial?: Inicial) {
   const mesmo = !!inicial?.mapa && inicial.mapa.cargo.codigo === cargo;
   return useQuery({
     ...consultaMapa(cargo),
-    // Cons. Distrital só existe num município: não há mapa por estado.
-    enabled: cargo !== "25",
     initialData: mesmo ? inicial!.mapa! : undefined,
     initialDataUpdatedAt: mesmo ? 0 : undefined,
     placeholderData: keepPreviousData,

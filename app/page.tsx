@@ -21,7 +21,7 @@ export default async function Pagina({ searchParams }: { searchParams: Params })
 
   const [resultado, mapa] = await Promise.all([
     precisaDeUf(filtros) ? null : obterResultado(filtros),
-    filtros.cargo === "25" ? null : obterMapa(filtros.cargo),
+    obterMapa(filtros.cargo),
   ]);
 
   return (

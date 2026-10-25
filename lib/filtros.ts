@@ -36,6 +36,7 @@ export function cargosDoSeletor(uf: string | null, mu: string | null): Cargo[] {
   return CARGOS.filter((c) => {
     if (c.apenasMunicipio) return mu === c.apenasMunicipio;
     if (c.apenasUfs) return !!uf && c.apenasUfs.includes(uf);
+    if (c.ufsComDisputa && uf && !c.ufsComDisputa.includes(uf)) return false;
     if (c.excetoUfs && uf && c.excetoUfs.includes(uf)) return false;
     return true;
   });
@@ -57,12 +58,13 @@ export function ajustarFiltros(atual: FiltrosUrl, mudanca: Partial<FiltrosUrl>):
 
   const oferecidos = cargosDoSeletor(uf, mu).map((c) => c.codigo);
   if (!oferecidos.includes(cargo)) {
-    // Trocas que preservam a intenção: quem olhava Dep. Estadual e foi para o
-    // DF quer ver Dep. Distrital, e vice-versa.
-    if (cargo === "7" && oferecidos.includes("8")) cargo = "8";
-    else if (cargo === "8" && oferecidos.includes("7")) cargo = "7";
-    else cargo = oferecidos[0] ?? "1";
+    cargo = oferecidos[0] ?? "1";
   }
+
+  // Governador no 2º turno só é publicado por estado: um município herdado de
+  // outro cargo deixaria o recorte inválido (400 no TSE).
+  const escolhido = cargoPorCodigo(cargo);
+  if (mu && escolhido && !escolhido.niveis.includes("mu")) mu = null;
 
   return { cargo, uf, mu };
 }

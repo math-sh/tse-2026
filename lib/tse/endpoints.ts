@@ -3,9 +3,9 @@
  *
  * A regra de `ufDir` / `abr` é a parte que mais gera 404:
  *
- *   Brasil     → /dados/br/br-c0001-e006257-u.json
- *   Estado     → /dados/sp/sp-c0003-e006259-u.json
- *   Município  → /dados/sp/sp71072-c0003-e006259-u.json   (sigla + código TSE)
+ *   Brasil     → /dados/br/br-c0001-e006258-u.json
+ *   Estado     → /dados/ac/ac-c0003-e006260-u.json
+ *   Município  → /dados/sp/sp71072-c0001-e006258-u.json   (sigla + código TSE)
  *
  * E as fotos seguem a UF do REGISTRO da candidatura, não a abrangência consultada:
  * Presidente em /fotos/br/, Governador de SP em /fotos/sp/. O mesmo sqcand na

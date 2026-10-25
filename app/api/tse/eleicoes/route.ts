@@ -3,11 +3,18 @@
  *
  * Espelha o `ele-c.json` do TSE, que é o catálogo de pleitos e cargos. O
  * dashboard usa o registro estático de `lib/tse/cargos.ts` no caminho normal;
- * esta rota serve para conferir no dia se os códigos ainda batem — e para
- * descobrir os códigos do 2º turno sem adivinhar.
+ * esta rota serve para conferir no dia se os códigos do turno configurado ainda
+ * batem, sem adivinhar.
  */
 import { NextResponse } from "next/server";
-import { CICLO, ELEICOES_2O_TURNO, ELE_ESTADUAL, ELE_FEDERAL, TURNO } from "@/lib/tse/cargos";
+import {
+  CICLO,
+  ELEICOES_1O_TURNO,
+  ELEICOES_2O_TURNO,
+  ELE_ESTADUAL,
+  ELE_FEDERAL,
+  TURNO,
+} from "@/lib/tse/cargos";
 import { urlEleicoes } from "@/lib/tse/endpoints";
 import { REVALIDATE, buscarTse } from "@/lib/tse/fetch";
 
@@ -44,12 +51,19 @@ export async function GET() {
           segundoTurno: e.cdt2 || null,
           turno: e.t,
           nome: e.nm,
-          cargos:
-            e.abr?.find((a) => a.cd === "br")?.cp?.map((c) => ({
-              codigo: c.cd,
-              nome: c.ds,
-              proporcional: c.tp === "2",
-            })) ?? [],
+          // O 2º turno estadual declara os cargos por UF (`abr[].cp`), não em
+          // `br`; por isso a lista é deduplicada entre todas as abrangências.
+          cargos: [
+            ...new Map(
+              (e.abr ?? [])
+                .flatMap((a) => a.cp ?? [])
+                .map((c) => [
+                  c.cd,
+                  { codigo: c.cd, nome: c.ds, proporcional: c.tp === "2" },
+                ] as const),
+            ).values(),
+          ],
+          ufsComCargo: (e.abr ?? []).filter((a) => (a.cp?.length ?? 0) > 0).map((a) => a.cd),
         })),
       );
 
@@ -59,6 +73,7 @@ export async function GET() {
         ciclo: CICLO,
         turnoConfigurado: TURNO,
         emUso: { federal: ELE_FEDERAL, estadual: ELE_ESTADUAL },
+        primeiroTurno: ELEICOES_1O_TURNO,
         segundoTurno: ELEICOES_2O_TURNO,
         eleicoes: doCiclo,
       },
