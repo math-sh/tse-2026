@@ -1,22 +1,20 @@
 @import "tailwindcss";
 
 /*
- * Paleta validada com scripts/validate_palette.js do design system, nos dois
- * modos, em 04/10/2026:
+ * Paleta do painel.
  *
- *   claro, 8 slots adjacentes  → PASS (WARN de contraste em aqua/amarelo/magenta
- *                                 → regra de alívio: rótulo visível + tabela,
- *                                   que este dashboard sempre tem)
- *   escuro, 8 slots adjacentes → PASS, todos ≥ 3:1
- *   mapa, 3 slots, TODOS os pares, claro  → PASS (CVD ΔE 9.2 · normal 24.0)
- *   mapa, 3 slots, TODOS os pares, escuro → PASS (CVD ΔE 9.4 · normal 20.9)
+ * Candidatos usam a cor do partido (lib/viz/partidos.ts): é identidade, não
+ * colocação — uma ultrapassagem no ranking não repinta ninguém. Partidos com
+ * cores parecidas são diferenciados pelo nome, pela sigla, pelo tooltip e pela
+ * tabela.
  *
- * O coroplético fica limitado a 3 matizes porque acima disso nenhuma ordenação
- * passa no critério de todos os pares. Não é preferência, é o resultado do
- * validador.
+ * A rampa sequencial azul mede magnitude (% apurado no mapa). As cores
+ * semânticas dos votos são fixas: verde para válidos (dois tons quando há
+ * nominais e legenda), branco para brancos — com contorno, para não sumir na
+ * superfície clara — e amarelo para nulos.
  *
- * A ordem dos slots é o mecanismo de segurança para daltonismo, não enfeite:
- * atribuir sempre em ordem fixa, nunca ciclar, nunca gerar um 9º matiz.
+ * Os tokens --series-* permanecem como paleta categórica geral; os gráficos
+ * atuais não os utilizam.
  */
 :root {
   color-scheme: light;
@@ -54,6 +52,12 @@
   --status-serious: #ec835a;
   --status-critical: #d03b3b;
   --delta-up: #006300;
+
+  /* Cores semânticas dos votos: identidade fixa, não posição no gráfico. */
+  --voto-valido: #0b7a3b;
+  --voto-valido-2: #52b96a;
+  --voto-branco: #ffffff;
+  --voto-nulo: #e0a400;
 }
 
 /* O modo escuro tem passos próprios da mesma rampa, validados contra a
@@ -83,6 +87,11 @@
 
     --neutral-mid: #383835;
     --delta-up: #0ca30c;
+
+    --voto-valido: #1f9d55;
+    --voto-valido-2: #7ed494;
+    --voto-branco: #ffffff;
+    --voto-nulo: #d9a400;
   }
 }
 
@@ -110,6 +119,11 @@
 
   --neutral-mid: #383835;
   --delta-up: #0ca30c;
+
+  --voto-valido: #1f9d55;
+  --voto-valido-2: #7ed494;
+  --voto-branco: #ffffff;
+  --voto-nulo: #d9a400;
 }
 
 /* `inline` faz as utilidades emitirem var(), então elas seguem a troca de tema
