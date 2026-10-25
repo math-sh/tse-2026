@@ -6,14 +6,15 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { INTERVALO_MS, consultaMapa, consultaResultado, useAgora, useTamanho } from "@/lib/cliente";
 import { ajustarFiltros, filtrosParaQuery, lerFiltros, precisaDeUf, type FiltrosUrl } from "@/lib/filtros";
-import { cargoPorCodigo } from "@/lib/tse/cargos";
+import { ROTULO_TURNO, cargoPorCodigo } from "@/lib/tse/cargos";
 import { fmtInt, fmtPct } from "@/lib/tse/parse";
 import { ufPorSigla } from "@/lib/tse/ufs";
 import { BarrasCandidatos } from "@/components/charts/BarrasCandidatos";
 import { MapaBrasil } from "@/components/charts/MapaBrasil";
 
-/** Rotação padrão: Presidente no país e o governo dos cinco maiores colégios. */
-const ROTACAO_PADRAO = ["1", "3:sp", "3:mg", "3:rj", "3:ba", "3:pr"];
+/** Rotação padrão: Presidente no país e os seis governos com 2º turno. */
+const GOVERNOS = cargoPorCodigo("3")?.ufsComDisputa ?? [];
+const ROTACAO_PADRAO = ["1", ...GOVERNOS.map((uf) => `3:${uf}`)];
 const INTERVALO_PADRAO_S = 20;
 
 /** "3:sp" → { cargo: "3", uf: "sp", mu: null }. Visão inválida é descartada. */
@@ -127,7 +128,7 @@ export function ModoTv() {
     refetchInterval: INTERVALO_MS,
     staleTime: 25_000,
   });
-  const comMapa = !visao.uf && visao.cargo !== "25";
+  const comMapa = !visao.uf;
   const mapa = useQuery({
     ...consultaMapa(visao.cargo),
     enabled: comMapa,
@@ -154,7 +155,7 @@ export function ModoTv() {
     <div className="flex h-dvh flex-col gap-6 overflow-hidden px-6 py-6 lg:px-12 lg:py-8">
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="text-[18px] font-medium text-ink-2">Eleições 2026 · 1º turno</p>
+          <p className="text-[18px] font-medium text-ink-2">Eleições 2026 · {ROTULO_TURNO}</p>
           <h1 className="mt-1 text-[clamp(36px,4.5vw,64px)] font-semibold leading-none tracking-tight text-ink">
             {cargo} <span className="text-ink-2">· {lugar}</span>
           </h1>

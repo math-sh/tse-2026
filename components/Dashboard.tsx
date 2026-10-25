@@ -12,7 +12,7 @@ import {
   type Inicial,
 } from "@/lib/cliente";
 import { filtrosParaQuery, precisaDeUf } from "@/lib/filtros";
-import { cargoPorCodigo } from "@/lib/tse/cargos";
+import { DATA_TURNO, ROTULO_TURNO, cargoPorCodigo } from "@/lib/tse/cargos";
 import { ufPorSigla } from "@/lib/tse/ufs";
 import { MAX_SERIES_MAPA, estenderSlots, slotsEstaveis } from "@/lib/viz/palette";
 import { StatusAtualizacao, TemaToggle } from "@/components/Cabecalho";
@@ -61,13 +61,13 @@ export function Dashboard({ inicial }: { inicial: Inicial }) {
     return { mapa: base, linha: estenderSlots(base, serie), serie };
   }, [mapa.data, historico.pontos]);
 
-  const mostrarMapa = filtros.cargo !== "25";
-
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-4 py-5 sm:px-6 lg:py-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[13px] font-medium text-ink-2">Eleições 2026 · 1º turno · 4 de outubro</p>
+          <p className="text-[13px] font-medium text-ink-2">
+            Eleições 2026 · {ROTULO_TURNO} · {DATA_TURNO}
+          </p>
           <h1 className="mt-1 text-[26px] font-semibold tracking-tight text-ink sm:text-[30px]">
             Apuração em tempo real
           </h1>
@@ -119,7 +119,7 @@ export function Dashboard({ inicial }: { inicial: Inicial }) {
             <KpiRow boletim={boletim} />
           </div>
 
-          <div className={`grid gap-5 ${mostrarMapa ? "lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]" : ""}`}>
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
             <Cartao
               titulo={`${boletim.cargo.nome} · ${abrangencia}`}
               subtitulo={
@@ -133,21 +133,19 @@ export function Dashboard({ inicial }: { inicial: Inicial }) {
               <BarrasCandidatos boletim={boletim} />
             </Cartao>
 
-            {mostrarMapa && (
-              <Cartao titulo="Por estado" subtitulo="Clique num estado para filtrar">
-                {mapa.data ? (
-                  <MapaBrasil
-                    mapa={mapa.data}
-                    ufSelecionada={filtros.uf}
-                    aoSelecionar={(sigla) => definir({ uf: sigla })}
-                  />
-                ) : mapa.isError ? (
-                  <Vazio>{mapa.error.message}</Vazio>
-                ) : (
-                  <div className="aspect-square animate-pulse rounded-lg bg-surface-2" />
-                )}
-              </Cartao>
-            )}
+            <Cartao titulo="Por estado" subtitulo="Clique num estado para filtrar">
+              {mapa.data ? (
+                <MapaBrasil
+                  mapa={mapa.data}
+                  ufSelecionada={filtros.uf}
+                  aoSelecionar={(sigla) => definir({ uf: sigla })}
+                />
+              ) : mapa.isError ? (
+                <Vazio>{mapa.error.message}</Vazio>
+              ) : (
+                <div className="aspect-square animate-pulse rounded-lg bg-surface-2" />
+              )}
+            </Cartao>
           </div>
 
           <div className="grid gap-5 lg:grid-cols-2">
@@ -171,7 +169,7 @@ export function Dashboard({ inicial }: { inicial: Inicial }) {
       )}
 
       {/* Sem boletim (cargo estadual no nível Brasil), o mapa vira a navegação. */}
-      {faltaUf && mostrarMapa && mapa.data && (
+      {faltaUf && mapa.data && (
         <Cartao titulo={`${mapa.data.cargo.nome} por estado`} subtitulo="Clique num estado para ver o resultado">
           <div className="mx-auto max-w-xl">
             <MapaBrasil mapa={mapa.data} ufSelecionada={null} aoSelecionar={(sigla) => definir({ uf: sigla })} />

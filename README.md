@@ -1,7 +1,7 @@
 # Apuração 2026 — dashboard em tempo real
 
-Painel da apuração das Eleições 2026 (1º turno, 4/10/2026) com dados oficiais de
-divulgação do TSE. Filtros por cargo, estado e município de todo o Brasil.
+Painel da apuração das Eleições 2026 (2º turno, 25/10/2026) com dados oficiais
+de divulgação do TSE. Filtros por cargo, estado e município de todo o Brasil.
 
 ```bash
 npm install
@@ -51,10 +51,23 @@ Detalhes que custaram para descobrir e estão documentados no código:
 - Fotos ficam na pasta da UF do **registro**: Presidente em `/fotos/br/`, os demais na sigla da UF.
 - `agremiacao.com` é a coligação inteira, não a federação — federações vêm em `carg.fed[]`.
 
-## 2º turno
+## Turnos
 
-Em `lib/tse/cargos.ts`, troque `ELE_FEDERAL` por `6258`, `ELE_ESTADUAL` por `6260`
-e `TURNO` por `2`. Os códigos vêm do campo `cdt2` do config do TSE; confira em
+A configuração fica em `lib/tse/cargos.ts`:
+
+- `TURNO` — turno exibido nos rótulos do painel.
+- `ELE_FEDERAL` / `ELE_ESTADUAL` — eleições do TSE consultadas.
+- `CARGOS` — cargos que existem neste turno.
+- `GOVERNOS_2O_TURNO` — estados com disputa para governador no 2º turno.
+
+Configuração atual (2º turno): Presidente na eleição `6258` e Governador na
+`6260`, apenas em AC, AM, DF, ES, RN e TO. O TSE não publica Governador no nível
+município neste turno — o seletor de município é desabilitado para o cargo.
+Senador, deputados e Conselheiro Distrital não existem no 2º turno.
+
+Para voltar ao 1º turno: `TURNO` = `1`, `ELE_FEDERAL` = `6257`,
+`ELE_ESTADUAL` = `6259` e restaurar em `CARGOS` os cargos 5, 6, 7, 8 e 25.
+Os códigos vêm do campo `cdt2` do config do TSE; confira em
 `/api/tse/eleicoes` antes de trocar.
 
 ## Variáveis de ambiente

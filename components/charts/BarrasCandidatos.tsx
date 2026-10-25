@@ -7,8 +7,8 @@ import { dobrar, type Fatia } from "@/lib/viz/fold";
 import { BARRA, DE_EMPHASIS } from "@/lib/viz/palette";
 import { ChipPartido, Dica, Foto, type EstadoDica } from "@/components/ui";
 
-/** Cargos com 2º turno: aqui a linha de 50% dos válidos significa algo. */
-const COM_SEGUNDO_TURNO = new Set(["1", "3"]);
+/** Presidente e Governador: disputa majoritária, onde os 50% são referência. */
+const CARGOS_MAJORITARIOS = new Set(["1", "3"]);
 
 /** Arredonda o máximo do eixo para um número "redondo". */
 function tetoBonito(max: number): number {
@@ -25,8 +25,9 @@ function tetoBonito(max: number): number {
  * rótulo direto e do chip partidário. "Outros" fica no cinza de retração.
  *
  * Escala: em Presidente e Governador o eixo vai de 0 a 100% para que a linha de
- * 50% — a que decide se há 2º turno — fique no lugar certo. Nos demais cargos
- * ninguém chega perto de 50%, e o eixo se ajusta ao maior valor.
+ * 50% dos válidos fique no lugar certo — no 1º turno ela indica a eleição
+ * direta; no 2º, a maioria. Nos demais cargos ninguém chega perto de 50%, e o
+ * eixo se ajusta ao maior valor.
  */
 export function BarrasCandidatos({
   boletim,
@@ -41,7 +42,7 @@ export function BarrasCandidatos({
   const fatias = dobrar(boletim.candidatos, limite);
   const semVotos = boletim.votos.nominais === 0 && fatias.every((f) => f.votos === 0);
 
-  const comLinha50 = COM_SEGUNDO_TURNO.has(boletim.cargo.codigo);
+  const comLinha50 = CARGOS_MAJORITARIOS.has(boletim.cargo.codigo);
   const maxPct = Math.max(0, ...fatias.filter((f) => !f.ehOutros).map((f) => f.pct));
   const teto = comLinha50 ? 100 : tetoBonito(maxPct);
   const largura = (pct: number) => `${Math.max(0, Math.min(100, (pct / teto) * 100))}%`;
@@ -164,7 +165,7 @@ export function BarrasCandidatos({
       {comLinha50 && !grande && (
         <p className="mt-4 flex items-center gap-2 text-[12px] text-ink-muted">
           <span aria-hidden className="inline-block h-3 border-l border-dashed" style={{ borderColor: "var(--baseline)" }} />
-          50% dos votos válidos — abaixo disso, há 2º turno
+          50% dos votos válidos{boletim.turno <= 1 ? " — abaixo disso, há 2º turno" : ""}
         </p>
       )}
 
