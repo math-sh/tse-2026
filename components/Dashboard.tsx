@@ -14,7 +14,6 @@ import {
 import { filtrosParaQuery, precisaDeUf } from "@/lib/filtros";
 import { DATA_TURNO, ROTULO_TURNO, cargoPorCodigo } from "@/lib/tse/cargos";
 import { ufPorSigla } from "@/lib/tse/ufs";
-import { MAX_SERIES_MAPA, estenderSlots, slotsEstaveis } from "@/lib/viz/palette";
 import { StatusAtualizacao, TemaToggle } from "@/components/Cabecalho";
 import { BarrasCandidatos } from "@/components/charts/BarrasCandidatos";
 import { ComposicaoVotos } from "@/components/charts/ComposicaoVotos";
@@ -46,20 +45,17 @@ export function Dashboard({ inicial }: { inicial: Inicial }) {
     ? `${nomeMunicipio ? titulo(nomeMunicipio) : `Município ${filtros.mu}`} (${filtros.uf?.toUpperCase()})`
     : uf?.nome ?? "Brasil";
 
-  // Uma cor por pessoa, a mesma no mapa e na linha do tempo: os 3 primeiros do
-  // país ficam com os slots do mapa, e a linha do tempo só estende.
-  const cores = useMemo(() => {
-    const destaques =
-      mapa.data?.agregavel
-        ? mapa.data.nacional.filter((c) => c.votos > 0).slice(0, MAX_SERIES_MAPA).map((c) => c.sqcand)
-        : [];
-    const base = slotsEstaveis(destaques, MAX_SERIES_MAPA);
+  // Quais candidatos a linha do tempo desenha: os mais bem colocados no último
+  // boletim. A cor de cada um vem do partido, dentro do próprio gráfico.
+  const serie = useMemo(() => {
     const ultimo = historico.pontos.at(-1);
-    const serie = ultimo
-      ? Object.entries(ultimo.valores).sort((a, b) => b[1] - a[1]).slice(0, SERIES_LINHA).map(([sq]) => sq)
+    return ultimo
+      ? Object.entries(ultimo.valores)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, SERIES_LINHA)
+          .map(([sq]) => sq)
       : [];
-    return { mapa: base, linha: estenderSlots(base, serie), serie };
-  }, [mapa.data, historico.pontos]);
+  }, [historico.pontos]);
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-4 py-5 sm:px-6 lg:py-8">
@@ -152,8 +148,7 @@ export function Dashboard({ inicial }: { inicial: Inicial }) {
             <Cartao titulo="Evolução da apuração" subtitulo="% de votos conforme as urnas chegam">
               <LinhaDoTempo
                 historico={historico}
-                candidatos={cores.serie}
-                cores={cores.linha}
+                candidatos={serie}
                 codigoCargo={filtros.cargo}
               />
             </Cartao>

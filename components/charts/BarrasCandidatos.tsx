@@ -4,7 +4,8 @@ import { useState } from "react";
 import type { Boletim } from "@/lib/tse/normalize";
 import { fmtInt, fmtPct } from "@/lib/tse/parse";
 import { dobrar, type Fatia } from "@/lib/viz/fold";
-import { BARRA, DE_EMPHASIS } from "@/lib/viz/palette";
+import { DE_EMPHASIS } from "@/lib/viz/palette";
+import { corPartido } from "@/lib/viz/partidos";
 import { ChipPartido, Dica, Foto, type EstadoDica } from "@/components/ui";
 
 /** Presidente e Governador: disputa majoritária, onde os 50% são referência. */
@@ -20,9 +21,9 @@ function tetoBonito(max: number): number {
 /**
  * Ranking horizontal (nomes longos pedem barra deitada).
  *
- * Um matiz só nas barras: a posição muda a cada boletim, e cor por colocação
- * faria os candidatos trocarem de cor numa ultrapassagem. A identidade vem do
- * rótulo direto e do chip partidário. "Outros" fica no cinza de retração.
+ * A cor de cada barra é a do partido do candidato — identidade estável, não
+ * colocação: uma ultrapassagem no ranking não repinta ninguém. "Outros" fica no
+ * cinza de retração.
  *
  * Escala: em Presidente e Governador o eixo vai de 0 a 100% para que a linha de
  * 50% dos válidos fique no lugar certo — no 1º turno ela indica a eleição
@@ -141,7 +142,9 @@ export function BarrasCandidatos({
                       width: largura(f.pct),
                       // Ponta de dado arredondada (4px), ancorada reta na base.
                       borderRadius: "0 4px 4px 0",
-                      background: f.ehOutros ? DE_EMPHASIS : BARRA,
+                      background: f.ehOutros ? DE_EMPHASIS : corPartido(f.partido),
+                      // Contorno hairline: partidos escuros continuam visíveis no tema escuro.
+                      boxShadow: "inset 0 0 0 1px var(--border)",
                       // Uma barra em zero ainda deixa um traço: "zero" e "sem barra" são coisas diferentes.
                       minWidth: 2,
                     }}

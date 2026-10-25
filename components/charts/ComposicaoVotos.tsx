@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Boletim } from "@/lib/tse/normalize";
 import { fmtInt, fmtPct } from "@/lib/tse/parse";
-import { SERIES } from "@/lib/viz/palette";
+import { VOTO_BRANCO, VOTO_NULO, VOTO_VALIDO, VOTO_VALIDO_2 } from "@/lib/viz/palette";
 import { Dica, Vazio, type EstadoDica } from "@/components/ui";
 
 interface Segmento {
@@ -16,9 +16,11 @@ interface Segmento {
 /**
  * Parte-de-todo dos votos: barra empilhada 100%.
  *
- * Nos cargos proporcionais os válidos se dividem em nominais e de legenda — e a
- * legenda conta para as cadeiras do partido, então vale mostrar. Nos
- * majoritários não existe voto de legenda, e a barra fica em três segmentos.
+ * As cores são semânticas: válidos em verde, brancos em branco e nulos em
+ * amarelo. Nos cargos proporcionais os válidos se dividem em nominais (verde
+ * escuro) e de legenda (verde claro) — e a legenda conta para as cadeiras do
+ * partido, então vale mostrar. Nos majoritários não existe voto de legenda, e a
+ * barra fica em três segmentos.
  *
  * Comparecimento × abstenção NÃO entra aqui: seria uma barra de duas fatias
  * repetindo o que os stat tiles do topo já dizem com o número.
@@ -38,15 +40,15 @@ export function ComposicaoVotos({ boletim }: { boletim: Boletim }) {
   const segmentos: Segmento[] =
     boletim.cargo.proporcional && v.legenda > 0
       ? [
-          { chave: "nominais", rotulo: "Nominais", valor: v.nominais, cor: SERIES[0] },
-          { chave: "legenda", rotulo: "Legenda", valor: v.legenda, cor: SERIES[1] },
-          { chave: "brancos", rotulo: "Brancos", valor: v.brancos, cor: SERIES[2] },
-          { chave: "nulos", rotulo: "Nulos", valor: v.nulos, cor: SERIES[3] },
+          { chave: "nominais", rotulo: "Nominais", valor: v.nominais, cor: VOTO_VALIDO },
+          { chave: "legenda", rotulo: "Legenda", valor: v.legenda, cor: VOTO_VALIDO_2 },
+          { chave: "brancos", rotulo: "Brancos", valor: v.brancos, cor: VOTO_BRANCO },
+          { chave: "nulos", rotulo: "Nulos", valor: v.nulos, cor: VOTO_NULO },
         ]
       : [
-          { chave: "validos", rotulo: "Válidos", valor: v.validos, cor: SERIES[0] },
-          { chave: "brancos", rotulo: "Brancos", valor: v.brancos, cor: SERIES[1] },
-          { chave: "nulos", rotulo: "Nulos", valor: v.nulos, cor: SERIES[2] },
+          { chave: "validos", rotulo: "Válidos", valor: v.validos, cor: VOTO_VALIDO },
+          { chave: "brancos", rotulo: "Brancos", valor: v.brancos, cor: VOTO_BRANCO },
+          { chave: "nulos", rotulo: "Nulos", valor: v.nulos, cor: VOTO_NULO },
         ];
 
   const total = segmentos.reduce((s, x) => s + x.valor, 0);
@@ -60,7 +62,7 @@ export function ComposicaoVotos({ boletim }: { boletim: Boletim }) {
         {segmentos.map((s) => (
           <li key={s.chave} className="min-w-0">
             <div className="flex items-center gap-1.5 text-[13px] text-ink-2">
-              <span aria-hidden className="size-2.5 shrink-0 rounded-sm" style={{ background: s.cor }} />
+              <span aria-hidden className="size-2.5 shrink-0 rounded-sm ring-1 ring-hairline" style={{ background: s.cor }} />
               {s.rotulo}
             </div>
             <div className="mt-0.5 text-[20px] font-semibold text-ink">{fmtPct(pct(s.valor))}</div>
@@ -83,7 +85,14 @@ export function ComposicaoVotos({ boletim }: { boletim: Boletim }) {
             <div
               key={s.chave}
               className="marca h-full transition-[flex-grow] duration-700 ease-out"
-              style={{ flexGrow: s.valor, flexBasis: 0, background: s.cor, minWidth: 2 }}
+              style={{
+                flexGrow: s.valor,
+                flexBasis: 0,
+                background: s.cor,
+                minWidth: 2,
+                // O segmento branco precisa de contorno para não sumir na superfície clara.
+                boxShadow: s.chave === "brancos" ? "inset 0 0 0 1px var(--baseline)" : undefined,
+              }}
               onPointerMove={(ev) =>
                 setDica({
                   x: ev.clientX,

@@ -1,14 +1,15 @@
 /**
- * Cores partidárias — usadas APENAS no chip ao lado do nome.
+ * Cores partidárias — a cor de identidade do candidato.
  *
- * Não entram no preenchimento das barras, e o motivo é concreto: PT, PCB, PSTU e
- * PCO são todos vermelhos, PL e PSD são ambos azuis. Com 12 presidenciáveis em
- * cor de partido, metade do gráfico fica indistinguível — e sob daltonismo,
- * pior ainda. O chip dá a familiaridade da cor partidária sem deixar a leitura
- * do gráfico depender dela.
+ * Usadas nas barras, na linha do tempo, no mapa por líder e no chip ao lado do
+ * nome. A cor segue o partido, não a colocação: uma ultrapassagem no ranking
+ * não repinta ninguém.
  *
- * Partido sem cor mapeada cai no cinza de retração, que é um resultado
- * aceitável para um chip de 8px.
+ * Alguns partidos compartilham o mesmo matiz (PT, PCB, PSTU e PCO são
+ * vermelhos; PL, PSD e PSDB são azuis). A diferenciação fica com o nome, a
+ * sigla, o tooltip e a tabela — a cor nunca é o único canal de identidade.
+ *
+ * Partido sem cor mapeada cai no cinza de retração.
  */
 const CORES: Record<string, string> = {
   PT: "#c4122f", PL: "#1b3f8b", PSD: "#1f5aa8", MDB: "#1a9b4c", PSDB: "#0a6cb3",
@@ -21,10 +22,26 @@ const CORES: Record<string, string> = {
   DEMOCRATA: "#15467c", MISSÃO: "#2b6f5a",
 };
 
-/** Cor do chip partidário. Aceita sigla de partido ou de federação. */
+/** Compara siglas sem acento, caixa ou pontuação: "PC do B" e "PCdoB" acham a mesma cor. */
+const normalizarSigla = (sigla: string) =>
+  sigla
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z0-9]/g, "")
+    .toUpperCase();
+
+const CORES_POR_SIGLA = new Map(
+  Object.entries(CORES).map(([sigla, cor]) => [normalizarSigla(sigla), cor]),
+);
+
+/** Cor do partido. Aceita sigla de partido ou de federação. */
 export function corPartido(sigla: string): string {
   if (!sigla) return "var(--de-emphasis)";
-  // Federação vem como "PT/PC do B/PV": o chip usa a cor do primeiro partido.
-  const primeiro = sigla.split("/")[0].trim().toUpperCase();
-  return CORES[primeiro] ?? CORES[sigla.toUpperCase()] ?? "var(--de-emphasis)";
+  // Federação vem como "PT/PC do B/PV": usa a cor do primeiro partido.
+  const primeiro = sigla.split("/")[0];
+  return (
+    CORES_POR_SIGLA.get(normalizarSigla(primeiro)) ??
+    CORES_POR_SIGLA.get(normalizarSigla(sigla)) ??
+    "var(--de-emphasis)"
+  );
 }

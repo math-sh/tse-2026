@@ -78,11 +78,16 @@ Os códigos vêm do campo `cdt2` do config do TSE; confira em
 
 ## Cores
 
-A paleta foi validada com o script do design system (daltonismo e contraste, claro
-e escuro). As barras de candidato usam um matiz só — num ranking ao vivo, cor por
-posição faria os candidatos trocarem de cor a cada ultrapassagem. A cor do
-partido aparece só no chip ao lado do nome. O mapa usa no máximo 3 cores de
-líder, o limite em que a paleta continua distinguível par a par.
+- **Candidatos**: cada um usa a cor do seu partido (mapa em `lib/viz/partidos.ts`),
+  nas barras, na linha do tempo e no mapa por líder. A cor é identidade, não
+  colocação: uma ultrapassagem no ranking não repinta ninguém.
+- **Votos**: válidos em verde (nominais em verde escuro e legenda em verde claro
+  nos cargos proporcionais), brancos em branco com contorno e nulos em amarelo.
+- **Mapa por % apurado**: rampa sequencial azul, mais escura = mais apurado.
+
+Partidos com cores parecidas (PT/PCB/PSTU/PCO são vermelhos; PL/PSD/PSDB são
+azuis) são diferenciados pelo nome, pela sigla, pelo tooltip e pela tabela. A cor
+nunca é o único canal de identidade.
 
 ## Malha do mapa
 

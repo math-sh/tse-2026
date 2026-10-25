@@ -5,7 +5,7 @@ import { curveMonotoneX, line } from "d3-shape";
 import { useMemo, useState } from "react";
 import { useLargura, type Historico } from "@/lib/cliente";
 import { fmtPct } from "@/lib/tse/parse";
-import { DE_EMPHASIS } from "@/lib/viz/palette";
+import { corPartido } from "@/lib/viz/partidos";
 import { BotaoSecundario, Dica, Vazio, type EstadoDica } from "@/components/ui";
 
 const ALTURA = 280;
@@ -27,17 +27,18 @@ interface Serie {
  * que se faz numa apuração ("com 60% apurado, como estava?"). Eixo y único — %
  * de votos. Crosshair + tooltip por padrão; rótulo direto na ponta de cada
  * linha, além da legenda, porque com 4+ séries o rótulo direto é obrigatório.
+ *
+ * A cor de cada linha é a do partido do candidato; o nome e o partido na
+ * legenda continuam sendo a identificação principal.
  */
 export function LinhaDoTempo({
   historico,
   candidatos,
-  cores,
   codigoCargo,
 }: {
   historico: Historico;
   /** sqcands a desenhar, já na ordem do ranking atual. */
   candidatos: string[];
-  cores: ReadonlyMap<string, string>;
   codigoCargo: string;
 }) {
   const [ref, largura] = useLargura<HTMLDivElement>();
@@ -54,13 +55,13 @@ export function LinhaDoTempo({
           sqcand: sq,
           nome: nomes[sq]?.nomeUrna ?? sq,
           partido: nomes[sq]?.partido ?? "",
-          cor: cores.get(sq) ?? DE_EMPHASIS,
+          cor: corPartido(nomes[sq]?.partido ?? ""),
           pontos: pontos
             .map((p, i) => ({ x: p.pctApurado, y: p.valores[sq], i }))
             .filter((p): p is { x: number; y: number; i: number } => typeof p.y === "number"),
         }))
         .filter((s) => s.pontos.length > 0),
-    [candidatos, nomes, pontos, cores],
+    [candidatos, nomes, pontos],
   );
 
   if (pontos.length === 0 || series.length === 0) {

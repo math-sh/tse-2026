@@ -8,7 +8,8 @@ import { useLargura } from "@/lib/cliente";
 import { fmtPct } from "@/lib/tse/parse";
 import type { Mapa, ResumoUf } from "@/lib/tse/tipos-mapa";
 import { ufPorIbge } from "@/lib/tse/ufs";
-import { DE_EMPHASIS, MAX_SERIES_MAPA, NEUTRO, corSequencial, slotsEstaveis } from "@/lib/viz/palette";
+import { NEUTRO, corSequencial } from "@/lib/viz/palette";
+import { corPartido } from "@/lib/viz/partidos";
 import { BotaoSecundario, Dica, Segmentado, type EstadoDica } from "@/components/ui";
 
 const malha = malhaJson as unknown as FeatureCollection<Geometry, { codarea: string }>;
@@ -20,14 +21,14 @@ type Modo = "lider" | "apuracao";
  *
  * Modo "líder" só existe para Presidente: é o único cargo com os mesmos
  * candidatos nas 27 UFs, então a cor significa a mesma pessoa em todo o mapa.
- * No coroplético vale o critério de TODOS os pares, e só os 3 primeiros slots
- * da paleta passam nele — por isso no máximo 3 candidatos ganham cor e o resto
- * vai para o cinza de "outro candidato".
+ * Cada UF recebe a cor do partido do líder, e a legenda lista todos os
+ * candidatos que lideram ao menos uma UF. Partidos com cores parecidas são
+ * diferenciados pelo nome e pela sigla na legenda.
  *
  * Modo "% apurado": rampa sequencial de um matiz, mais escuro = mais apurado.
  *
- * A tabela ao lado ("Ver tabela") é a rota acessível — e é ela que satisfaz a
- * regra de alívio para o slot aqua, que fica abaixo de 3:1 no tema claro.
+ * A tabela ao lado ("Ver tabela") é a rota acessível: nome, partido e percentual
+ * do líder ficam legíveis sem depender da cor.
  */
 export function MapaBrasil({
   mapa,
@@ -58,16 +59,37 @@ export function MapaBrasil({
 
   const porUf = useMemo(() => new Map(mapa.estados.map((e) => [e.uf, e])), [mapa.estados]);
 
-  // Os 3 primeiros no agregado nacional ganham cor; o slot segue o sqcand, não a
-  // colocação, então uma ultrapassagem entre eles não repinta o mapa.
-  const destaques = useMemo(
-    () => mapa.nacional.filter((c) => c.votos > 0).slice(0, MAX_SERIES_MAPA),
-    [mapa.nacional],
-  );
-  const slots = useMemo(
-    () => slotsEstaveis(destaques.map((c) => c.sqcand), MAX_SERIES_MAPA),
-    [destaques],
-  );
+  // Todos os candidatos que lideram ao menos uma UF, com a cor do partido.
+  // A ordem é por número de UFs lideradas e, no empate, pelos votos nacionais.
+  const lideres = useMemo(() => {
+    const nacional = new Map(mapa.nacional.map((c) => [c.sqcand, c]));
+    const porCandidato = new Map<
+      string,
+      { sqcand: string; nomeUrna: string; partido: string; ufs: number }
+    >();
+
+    for (const estado of mapa.estados) {
+      if (!estado.lider) continue;
+      const atual = porCandidato.get(estado.lider.sqcand);
+      if (atual) {
+        atual.ufs += 1;
+      } else {
+        porCandidato.set(estado.lider.sqcand, {
+          sqcand: estado.lider.sqcand,
+          nomeUrna: estado.lider.nomeUrna,
+          partido: estado.lider.partido,
+          ufs: 1,
+        });
+      }
+    }
+
+    return [...porCandidato.values()]
+      .map((c) => {
+        const n = nacional.get(c.sqcand);
+        return { ...c, pct: n?.pct ?? null, votos: n?.votos ?? 0, fonte: n?.fonte ?? null };
+      })
+      .sort((a, b) => b.ufs - a.ufs || b.votos - a.votos);
+  }, [mapa.estados, mapa.nacional]);
 
   const altura = Math.round(Math.min(largura * 0.96, alturaMaxima ?? Infinity));
   const caminhos = useMemo(() => {
@@ -85,10 +107,9 @@ export function MapaBrasil({
     if (!e.disponivel) return `url(#${idHachura})`;
     if (modo === "apuracao") return corSequencial(e.pctApurado / 100);
     if (!e.lider) return NEUTRO;
-    return slots.get(e.lider.sqcand) ?? DE_EMPHASIS;
+    return corPartido(e.lider.partido);
   };
 
-  const algumOutroLider = mapa.estados.some((e) => e.lider && !slots.has(e.lider.sqcand));
   const algumSemVoto = mapa.estados.some((e) => e.elegivel && e.disponivel && !e.lider);
 
   const mostrarDica = (x: number, y: number, e: ResumoUf | undefined) => {
@@ -211,27 +232,24 @@ export function MapaBrasil({
       {/* Legenda sempre presente. Texto em tinta de texto; a cor fica só na amostra. */}
       {modo === "lider" ? (
         <ul className="flex flex-col gap-1.5 text-[13px] text-ink">
-          {destaques.length === 0 && (
+          {lideres.length === 0 && (
             <li className="flex items-center gap-2 text-ink-2">
               <Amostra cor={NEUTRO} /> Nenhum voto apurado ainda
             </li>
           )}
-          {destaques.map((c) => (
+          {lideres.map((c) => (
             <li key={c.sqcand} className="flex items-center gap-2">
-              <Amostra cor={slots.get(c.sqcand)!} />
-              <span className="font-medium">{c.nomeUrna}</span>
-              <span className="text-ink-2">{c.partido}</span>
-              <span className="tabular ml-auto text-ink-2">
-                {fmtPct(c.pct)} {c.fonte === "brasil" ? "no país" : "nas 27 UFs"}
+              <Amostra cor={corPartido(c.partido)} />
+              <span className="min-w-0 truncate font-medium">{c.nomeUrna}</span>
+              <span className="shrink-0 text-ink-2">{c.partido}</span>
+              <span className="tabular ml-auto shrink-0 text-ink-2">
+                {c.ufs === 1 ? "1 UF" : `${c.ufs} UFs`}
+                {c.pct !== null &&
+                  ` · ${fmtPct(c.pct)} ${c.fonte === "brasil" ? "no país" : "nas 27 UFs"}`}
               </span>
             </li>
           ))}
-          {algumOutroLider && (
-            <li className="flex items-center gap-2 text-ink-2">
-              <Amostra cor={DE_EMPHASIS} /> Outro candidato lidera
-            </li>
-          )}
-          {destaques.length > 0 && algumSemVoto && (
+          {lideres.length > 0 && algumSemVoto && (
             <li className="flex items-center gap-2 text-ink-2">
               <Amostra cor={NEUTRO} /> Sem votos apurados
             </li>
@@ -299,12 +317,28 @@ function ConteudoDica({ e, cargo }: { e: ResumoUf; cargo: string }) {
           {e.lider ? (
             <div className="tabular space-y-0.5 border-t border-hairline pt-1.5">
               <p className="flex justify-between gap-2">
-                <span className="truncate">1º {e.lider.nomeUrna} <span className="text-ink-2">{e.lider.partido}</span></span>
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="size-2 shrink-0 rounded-full ring-1 ring-hairline"
+                    style={{ background: corPartido(e.lider.partido) }}
+                  />
+                  <span className="truncate">
+                    1º {e.lider.nomeUrna} <span className="text-ink-2">{e.lider.partido}</span>
+                  </span>
+                </span>
                 <b>{fmtPct(e.lider.pct)}</b>
               </p>
               {e.segundo && (
                 <p className="flex justify-between gap-2 text-ink-2">
-                  <span className="truncate">2º {e.segundo.nomeUrna} {e.segundo.partido}</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span
+                      aria-hidden
+                      className="size-2 shrink-0 rounded-full ring-1 ring-hairline"
+                      style={{ background: corPartido(e.segundo.partido) }}
+                    />
+                    <span className="truncate">2º {e.segundo.nomeUrna} {e.segundo.partido}</span>
+                  </span>
                   <span>{fmtPct(e.segundo.pct)}</span>
                 </p>
               )}

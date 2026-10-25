@@ -94,7 +94,7 @@ export function ChipPartido({ sigla, numero }: { sigla: string; numero?: string 
   if (!sigla) return null;
   return (
     <span className="inline-flex items-center gap-1.5 text-[12px] text-ink-2">
-      <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: corPartido(sigla) }} />
+      <span aria-hidden className="size-2 shrink-0 rounded-full ring-1 ring-hairline" style={{ background: corPartido(sigla) }} />
       <span className="truncate">{sigla}</span>
       {numero && <span className="tabular text-ink-muted">{numero}</span>}
     </span>
